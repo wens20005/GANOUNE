@@ -1,4 +1,4 @@
-name: NodeJS with Gulp
+name: NodeJS with Gulp CI
 
 on:
   push:
@@ -15,14 +15,37 @@ jobs:
         node-version: [18.x, 20.x, 22.x]
 
     steps:
+    # 1️⃣ Checkout repository
     - uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
+    # 2️⃣ Setup Node.js
+    - name: Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
 
-    - name: Build
-      run: |
-        npm install
-        gulp
+    # 3️⃣ Cache node_modules for faster installs
+    - name: Cache node modules
+      uses: actions/cache@v3
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    # 4️⃣ Install dependencies
+    - name: Install dependencies
+      run: npm install
+
+    # 5️⃣ Run ESLint
+    - name: Run ESLint
+      run: npm run lint || echo "Lint errors found"
+
+    # 6️⃣ Run tests
+    - name: Run tests
+      run: npm test
+
+    # 7️⃣ Build the project using Gulp
+    - name: Build with Gulp
+      run: gulp
+
